@@ -8,7 +8,7 @@
   --dynamic: #6a9cd2;
 }
 
-*{
+* {
   box-sizing: border-box;
 }
 
@@ -18,7 +18,7 @@ body {
   height: 100%;
 }
 
-body{
+body {
   background-color: #e0dcd3;
   color: var(--txt);
   font-family: 'Gaegu', sans-serif;
@@ -46,7 +46,7 @@ body{
 }
 
 .screen {
-  display: none; 
+  display: none;
   flex-direction: column;
   flex: 1;
   min-height: 0;
@@ -76,8 +76,11 @@ header {
 }
 
 .icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
-  border: none; 
+  border: none;
   padding: 6px;
   font-family: inherit;
   font-size: 1.2rem;
@@ -87,6 +90,12 @@ header {
 
 .icon-btn:active {
   opacity: 0.5;
+}
+
+.custom-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 .dashboard-main {
@@ -152,19 +161,49 @@ footer {
 }
 
 .illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 220px;
   margin: 1rem 0;
+}
+
+.cat-illustration {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .week-strip {
   height: 90px;
 }
 
+.month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .month-title {
-  margin: 0 0 1.5rem;
+  flex: 1;
+  margin: 0;
   text-align: center;
   font-size: 2rem;
   font-weight: 400;
+}
+
+.nav-arrow {
+  display: flex;
+  padding: 5px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-arrow img {
+  width: 24px;
+  height: 24px;
 }
 
 .weekday-row {
@@ -183,6 +222,17 @@ footer {
   font-weight: 400;
 }
 
+/*26px icon + 6px padding each side*/
+.header-spacer {
+  width: 38px;
+}
+
+.screen h3 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
 label {
   display: block;
   margin-bottom: 5px;
@@ -198,5 +248,5 @@ input {
   border-radius: 12px;
   font-family: inherit;
   font-size: 1.1rem;
-  color: vat(--txt);
+  color: var(--txt);
 }

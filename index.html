@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>bebo.</title>
+  <link rel="icon" href="favicon.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,15 +17,21 @@
       <header>
         <h1 class="logo">bebo.</h1>
         <div class="header-actions">
-          <button class="icon-btn">set</button>
-          <button class="icon-btn">cal</button>
+          <button class="icon-btn" onclick="navTo('settings')">
+            <img src="icon/set.png" alt="settings" class="custom-icon">
+          </button>
+          <button class="icon-btn" onclick="navTo('calender')">
+            <img src="icon/cal.png" alt="calender" class="custom-icon">
+          </button>
         </div>
       </header>
       <main class="dashboard-main">
         <p class="cycle-day">cycle day <span id="cycle-day-number">12</span></p>
         <h2 id="cycle-phase">phase</h2>
         <p id="cycle-message">message below phase</p>
-        <div class="placeholder illustration">[image]</div>
+        <div class="illustration">
+          <img id="cat-image" src="cat/fol.png" alt="" class="cat-illustration">
+        </div>
         <button class="pill-btn">log period today</button>
       </main>
       <footer>
@@ -34,17 +41,31 @@
 
     <section id="screen-calender" class="screen">
       <header>
-        <button class="icon-btn">back</button>
-        <button class="icon-btn">settings</button>
+        <button class="icon-btn" onclick="navTo('dashboard')">
+          <img src="icon/back.png" alt="back" class="custom-icon">
+        </button>
+        <button class="icon-btn" onclick="navTo('settings')">
+          <img src="icon/set.png" alt="settings" class="custom-icon">
+        </button>
       </header>
-      <h2 class="month-title">october 2026</h2>
+      <div class="month-header">
+        <button class="nav-arrow">
+          <img src="icon/prev.png" alt="previous month">
+        </button>
+        <h2 class="month-title">october 2026</h2>
+        <button class="nav-arrow">
+          <img src="icon/next.png" alt="next month">
+        </button>
+      </div>
       <p class="weekday-row">M T W T F S S</p>
       <div class="placeholder month-grid">[month grid here]</div>
     </section>
 
     <section id="screen-settings" class="screen">
       <header>
-        <button class="icon-btn">back</button>
+        <button class="icon-btn" onclick="navTo('dashboard')">
+          <img src="icon/back.png" alt="back" class="custom-icon">
+        </button>
         <h2 class="page-title">preferences</h2>
         <div class="header-spacer"></div>
       </header>
@@ -56,6 +77,7 @@
     </section>
 
   </div>
+  <script src="app.js"></script>
 </body>
 
 </html>
