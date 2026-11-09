@@ -206,6 +206,11 @@ footer {
   height: 24px;
 }
 
+.nav-arrow:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
