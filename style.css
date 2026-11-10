@@ -232,6 +232,7 @@ footer {
   justify-content: center;
   height: 40px;
   font-size: 1.25rem;
+  cursor: pointer;
 }
 
 .day-number {
@@ -245,6 +246,14 @@ footer {
 
 .cal-day.today .day-number {
   border: 2px solid var(--txt);
+}
+
+.cal-day.period .day-number {
+  background-color: var(--pink);
+}
+
+.cal-day.muted {
+  opacity: 0.35;
 }
 
 .page-title {
