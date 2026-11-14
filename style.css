@@ -126,6 +126,8 @@ header {
   margin: 0;
   font-size: 1.2rem;
   color: var(--txt-light);
+  white-space: pre-line;
+  min-height: 2lh;
 }
 
 .pill-btn {

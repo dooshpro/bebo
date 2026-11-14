@@ -26,13 +26,13 @@
         </div>
       </header>
       <main class="dashboard-main">
-        <p class="cycle-day">cycle day <span id="cycle-day-number">12</span></p>
-        <h2 id="cycle-phase">phase</h2>
-        <p id="cycle-message">message below phase</p>
+        <p class="cycle-day">cycle day <span id="cycle-day-number">-</span></p>
+        <h2 id="cycle-phase">welcome</h2>
+        <p id="cycle-message">tap the gear icon to log your dates.</p>
         <div class="illustration">
-          <img id="cat-image" src="cat/fol.png" alt="" class="cat-illustration">
+          <img id="cat-image" src="cat/lut.png" alt="" class="cat-illustration">
         </div>
-        <button class="pill-btn">log period today</button>
+        <button id="quick-action-btn" class="pill-btn" onclick="handleQuickAction()">set up data</button>
       </main>
       <footer>
         <div class="placeholder week-strip">[week strip here]</div>
