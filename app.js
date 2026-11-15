@@ -4,6 +4,8 @@ const MONTH_LIMIT = 12;
 const DAY_MS = 86400000;
 const LIMITS = { period: { min: 1, max: 10 }, cycle: { min: 20, max: 45 } };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// logs this close together count as one period
 const SAME_PERIOD_GAP = 5;
 const FERTILE_BEFORE = 5;
 const FERTILE_AFTER = 1;
@@ -17,7 +19,6 @@ const PHASES = {
   'late': { message: 'taking a little longer\nthis month.', color: '#f2b28c', image: 'cat/lat.png' }
 };
 const WELCOME = { color: '#6a9cd2', image: 'cat/lut.png' };
-
 
 // not toISOString(): it converts to utc and can give the previous day
 function dateKey(date) {
@@ -42,8 +43,7 @@ function daysBetween(a, b) {
 
 function mean(numbers) {
   return numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
-} 
-
+}
 
 function isDateKey(value) {
   if (typeof value !== 'string' || !DATE_RE.test(value)) return false;
@@ -128,6 +128,7 @@ function averages(periods) {
   };
 }
 
+// ovulation is about 14 days before the next period
 function ovulationDay(cycleLen) {
   return Math.max(1, cycleLen - 14);
 }
@@ -208,9 +209,10 @@ function navTo(name) {
   }
 }
 
-function actionLabel(info) {
-  if (!info) return 'set up data';
-  return info.phase === 'menstruation' ? 'you are on it.' : 'log period today';
+function setActionButton(info) {
+  const dot = info ? `<span class="action-dot ${info.phase === 'menstruation' ? 'pink-bg' : 'blue-bg'}"></span> ` : '';
+  const label = !info ? 'set up data' : info.phase === 'menstruation' ? 'you are on it.' : 'log period today';
+  document.getElementById('quick-action-btn').innerHTML = `${dot}${label} &nbsp;<img src="icon/next.png" class="btn-arrow" alt="">`;
 }
 
 function renderDashboard() {
@@ -222,7 +224,34 @@ function renderDashboard() {
   document.getElementById('cycle-phase').textContent = info ? info.phase : 'welcome';
   document.getElementById('cycle-message').textContent = info ? info.message : 'tap the gear icon to log your dates.';
   document.getElementById('cat-image').src = look.image;
-  document.getElementById('quick-action-btn').textContent = actionLabel(info);
+  setActionButton(info);
+  renderWeekStrip();
+}
+
+function renderWeekStrip() {
+  const today = new Date();
+  let html = '';
+
+  for (let i = -3; i <= 3; i++) {
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const info = cycleInfo(date);
+    const name = date.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+
+    let dot = 'dot';
+    if (i === 0) {
+      dot += ' today';
+    } else if (info && info.phase === 'menstruation') {
+      dot += ' pink';
+    } else if (info && (info.phase === 'ovulation' || info.phase === 'fertile window')) {
+      dot += ' blue';
+    } else if (i < 0) {
+      dot += ' hollow';
+    }
+
+    html += `<div class="day-item${i === 0 ? ' active' : ''}"><span class="day-name">${name}</span><span class="day-num">${date.getDate()}</span><span class="${dot}"></span></div>`;
+  }
+
+  document.getElementById('week-strip').innerHTML = html;
 }
 
 function handleQuickAction() {
@@ -256,6 +285,38 @@ function changeMonth(delta) {
   renderCalender();
 }
 
+function mutedDay(n) {
+  return `<div class="cal-day muted"><span class="day-number">${n}</span></div>`;
+}
+
+function calenderDay(date) {
+  const key = dateKey(date);
+  const info = cycleInfo(date);
+  const classes = ['cal-day'];
+  let circle = '';
+  let dot = '';
+
+  if (key === dateKey(new Date())) classes.push('today');
+
+  if (info && info.phase === 'menstruation') {
+    if (appData.periodDays.includes(key) || date <= startOfDay(new Date())) {
+      classes.push('logged-period');
+    } else {
+      classes.push('pink-text');
+      dot = '<span class="dot pink"></span>';
+    }
+  } else if (info && info.phase === 'ovulation') {
+    classes.push('fertile-day', 'ovulation-day');
+    circle = '<span class="ovulation-circle"></span>';
+    dot = '<span class="dot blue"></span>';
+  } else if (info && info.phase === 'fertile window') {
+    classes.push('fertile-day');
+    dot = '<span class="dot blue"></span>';
+  }
+
+  return `<div class="${classes.join(' ')}">${circle}<span class="day-number">${date.getDate()}</span>${dot}</div>`;
+}
+
 function renderCalender() {
   const first = monthFromOffset(currentMonthOffset);
   const year = first.getFullYear();
@@ -268,17 +329,16 @@ function renderCalender() {
 
   let html = '';
 
-  // Date rolls month -1 and 12 over into the neighbouring year
   for (let i = leading - 1; i >= 0; i--) {
-    html += dayCell(new Date(year, month - 1, daysInPrevMonth - i), { isMuted: true });
+    html += mutedDay(daysInPrevMonth - i);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    html += dayCell(new Date(year, month, day));
+    html += calenderDay(new Date(year, month, day));
   }
 
   for (let n = 1; n <= trailing; n++) {
-    html += dayCell(new Date(year, month + 1, n), { isMuted: true });
+    html += mutedDay(n);
   }
 
   document.getElementById('calender-grid').innerHTML = html;

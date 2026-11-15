@@ -63,6 +63,8 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  min-height: 44px;
 }
 
 .header-actions {
@@ -107,12 +109,24 @@ header {
 }
 
 .cycle-day {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 1.2rem;
 }
 
 #cycle-day-number {
   color: var(--dynamic);
+}
+
+.dynamic-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--dynamic);
+  border-radius: 50%;
+  transition: background-color 0.4s ease;
 }
 
 #cycle-phase {
@@ -125,41 +139,10 @@ header {
 #cycle-message {
   margin: 0;
   font-size: 1.2rem;
+  line-height: 1.2;
   color: var(--txt-light);
   white-space: pre-line;
   min-height: 2lh;
-}
-
-.pill-btn {
-  align-self: center;
-  width: 65%;
-  max-width: 280px;
-  padding: 8px 12px;
-  background: transparent;
-  border: 2px solid var(--txt);
-  border-radius: 30px;
-  font-family: inherit;
-  font-size: 1.3rem;
-  color: var(--txt);
-  cursor: pointer;
-}
-
-.pill-btn:active {
-  background-color: var(--txt);
-  color: var(--bg);
-}
-
-footer {
-  padding-bottom: 10px;
-}
-
-.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--border);
-  border-radius: 20px;
-  color: var(--txt-light);
 }
 
 .illustration {
@@ -176,15 +159,120 @@ footer {
   object-fit: contain;
 }
 
+.pill-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 65%;
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 8px 12px;
+  background: transparent;
+  border: 2px solid var(--txt);
+  border-radius: 30px;
+  font-family: inherit;
+  font-size: 1.3rem;
+  color: var(--txt);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pill-btn:active {
+  background-color: var(--txt);
+  color: var(--bg);
+}
+
+.action-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.btn-arrow {
+  width: 14px;
+  opacity: 0.8;
+}
+
+footer {
+  flex-shrink: 0;
+  padding-bottom: 10px;
+}
+
 .week-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   height: 90px;
+}
+
+.day-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 2px;
+  width: 45px;
+  border-radius: 30px;
+  transition: background-color 0.4s ease;
+}
+
+.day-name {
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+}
+
+.day-num {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.day-item.active {
+  background-color: var(--dynamic);
+  color: var(--txt);
+  padding: 15px 2px 10px 2px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+.dot.pink {
+  background-color: var(--pink);
+}
+
+.dot.blue {
+  background-color: var(--blue);
+}
+
+.dot.today {
+  background-color: var(--txt);
+}
+
+.dot.hollow {
+  border: 1px solid var(--border);
+  width: 4px;
+  height: 4px;
+}
+
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.scrollable-content::-webkit-scrollbar {
+  display: none;
 }
 
 .month-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 0 5px;
 }
 
 .month-title {
@@ -216,33 +304,44 @@ footer {
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 1rem;
+  width: 100%;
+  margin-bottom: 20px;
   text-align: center;
+  font-size: 1.1rem;
   color: var(--txt-light);
 }
 
 .calender-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  row-gap: 12px;
+  row-gap: 25px;
+  width: 100%;
   text-align: center;
 }
 
 .cal-day {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 40px;
+  justify-content: flex-start;
+  position: relative;
+  height: 45px;
+  gap: 3px;
   font-size: 1.25rem;
+  isolation: isolate;
+  z-index: 1;
 }
 
 .day-number {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  line-height: 1;
+  z-index: 1;
+  transition: background-color 0.2s;
 }
 
 .cal-day.today .day-number {
@@ -259,6 +358,76 @@ footer {
 
 .cal-day.tappable {
   cursor: pointer;
+}
+
+.cal-day.pink-text .day-number {
+  color: var(--pink);
+}
+
+.cal-day.logged-period .day-number {
+  background-color: var(--pink);
+  color: white;
+}
+
+.cal-day.fertile-day .day-number {
+  color: var(--blue);
+}
+
+.cal-day.ovulation-day .ovulation-circle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border: 2px dashed var(--blue);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.calender-key {
+  margin-top: 40px;
+  padding: 0 10px;
+}
+
+.calender-key p {
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 1.2rem;
+}
+
+.key-title {
+  color: var(--txt-light);
+}
+
+.calender-key .key-note {
+  display: block;
+  margin-top: 25px;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: var(--txt-light);
+}
+
+.key-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.pink-bg {
+  background-color: var(--pink);
+}
+
+.blue-bg {
+  background-color: var(--blue);
+}
+
+.key-circle {
+  width: 16px;
+  height: 16px;
+  border: 2px dashed var(--blue);
+  border-radius: 50%;
 }
 
 .page-title {
@@ -322,6 +491,10 @@ input {
 .settings-cal-wrapper .weekday-row {
   margin-bottom: 0.6rem;
   font-size: 0.95rem;
+}
+
+.settings-cal-wrapper .calender-grid {
+  row-gap: 12px;
 }
 
 .settings-cal-wrapper .cal-day {
