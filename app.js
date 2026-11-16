@@ -1,3 +1,10 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.error('service worker failed', err));
+  });
+}
+
 const STORAGE_KEY = 'bebo-data';
 const OLD_KEY = 'bebo-period-days';
 const MONTH_LIMIT = 12;
@@ -446,5 +453,10 @@ function importData(event) {
   reader.readAsText(file);
   input.value = ''; // so the same file can be picked again
 }
+
+const catImage = document.getElementById('cat-image');
+catImage.onerror = () => {
+  if (!catImage.src.endsWith(WELCOME.image)) catImage.src = WELCOME.image;
+};
 
 renderDashboard();
