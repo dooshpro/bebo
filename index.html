@@ -53,7 +53,7 @@
           <button id="prev-month-btn" class="nav-arrow" onclick="changeMonth(-1)">
             <img src="icon/prev.png" alt="previous month">
           </button>
-          <h2 id="calender-month-title" class="month-title">october 2026</h2>
+          <h2 id="calender-month-title" class="month-title">Month Year</h2>
           <button id="next-month-btn" class="nav-arrow" onclick="changeMonth(1)">
             <img src="icon/next.png" alt="next month">
           </button>
@@ -80,33 +80,52 @@
         <h2 class="page-title">preferences</h2>
         <div class="header-spacer"></div>
       </header>
+      <div class="scrollable-content settings-content">
 
-      <div class="settings-section">
-        <h3>cycle lengths</h3>
-        <label for="period-length">period duration</label>
-        <input type="number" id="period-length" min="1" max="10" value="5" onchange="saveSettings()">
-        <label for="cycle-length">cycle length</label>
-        <input type="number" id="cycle-length" min="20" max="45" value="28" onchange="saveSettings()">
-      </div>
+        <div id="owner-settings-block">
+          <div class="settings-section">
+            <h3>cycle lengths</h3>
+            <div class="input-group">
+              <label for="setting-period-length">period duration (days)</label>
+              <input type="number" id="setting-period-length" min="1" max="10" value="5" onchange="saveSettings()">
+            </div>
+            <div class="input-group">
+              <label for="setting-cycle-length">cycle length (days)</label>
+              <input type="number" id="setting-cycle-length" min="20" max="45" value="28" onchange="saveSettings()">
+            </div>
+          </div>
 
-      <div class="settings-section">
-        <h3>log past periods</h3>
-        <p class="settings-desc">tap every day of bleeding to build your history.</p>
-        <div class="settings-cal-wrapper">
-          <div class="month-header">
-            <button id="settings-prev-month-btn" class="nav-arrow" onclick="changeSettingsMonth(-1)">
-              <img src="icon/prev.png" alt="previous month">
-            </button>
-            <h4 id="settings-month-title" class="month-title">october 2026</h4>
-            <button id="settings-next-month-btn" class="nav-arrow" onclick="changeSettingsMonth(1)">
-              <img src="icon/next.png" alt="next month">
-            </button>
+          <div class="settings-section">
+            <h3>log past periods</h3>
+            <p class="settings-desc">tap every day of bleeding to build your history.</p>
+            <div class="settings-cal-wrapper">
+              <div class="settings-month-header">
+                <button class="nav-arrow" onclick="changeSettingsMonth(-1)">
+                  <img src="icon/prev.png" alt="previous">
+                </button>
+                <h4 id="settings-month-title">Month Year</h4>
+                <button class="nav-arrow" id="settings-next-month-btn" onclick="changeSettingsMonth(1)">
+                  <img src="icon/next.png" alt="next">
+                </button>
+              </div> 
+              <div class="weekday-row">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div id="settings-calender-grid" class="calender-grid"></div>
+            </div>
           </div>
-          <div class="weekday-row">
-            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-          </div>
-          <div id="settings-calender-grid" class="calender-grid"></div>
         </div>
+
+        <div class="settings-section" id="backup-section">
+          <h3>backup &amp; restore</h3>
+          <p class="settings-desc">save your data to a file in case you clear your browser history. sync links aren't included.</p>
+          <div class="button-row">
+            <button class="save-btn" onclick="exportData()">export</button>
+            <button class="save-btn secondary-btn" onclick="document.getElementById('import-file').click()">import</button>
+            <input type="file" id="import-file" accept=".json" hidden onchange="importData(event)">
+          </div>
+        </div>
+
       </div>
     </section>
 

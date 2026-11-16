@@ -12,6 +12,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -88,6 +92,7 @@ header {
   font-size: 1.2rem;
   color: var(--txt);
   cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .icon-btn:active {
@@ -175,11 +180,6 @@ header {
   color: var(--txt);
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.pill-btn:active {
-  background-color: var(--txt);
-  color: var(--bg);
 }
 
 .action-dot {
@@ -344,20 +344,8 @@ footer {
   transition: background-color 0.2s;
 }
 
-.cal-day.today .day-number {
-  border: 2px solid var(--txt);
-}
-
-.cal-day.period .day-number {
-  background-color: var(--pink);
-}
-
-.cal-day.muted {
-  opacity: 0.35;
-}
-
-.cal-day.tappable {
-  cursor: pointer;
+.cal-day.muted .day-number {
+  color: #c4c4c4;
 }
 
 .cal-day.pink-text .day-number {
@@ -375,6 +363,7 @@ footer {
 
 .cal-day.ovulation-day .ovulation-circle {
   position: absolute;
+  top: -4px;
   left: 50%;
   transform: translateX(-50%);
   width: 32px;
@@ -440,21 +429,41 @@ footer {
   width: 38px; /* 26px icon + 6px padding each side */
 }
 
-.screen h3 {
-  margin: 0 0 1rem;
+.settings-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  margin: 0 0 5px;
   font-size: 1.5rem;
   font-weight: 400;
 }
 
-label {
-  display: block;
+.settings-desc {
+  margin: 0 0 15px;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  color: var(--txt-light);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.input-group label {
   margin-bottom: 5px;
   font-size: 1.2rem;
 }
 
-input {
-  width: 100%;
-  margin-bottom: 15px;
+.input-group input {
   padding: 10px;
   background: transparent;
   border: 1px solid var(--border);
@@ -462,16 +471,47 @@ input {
   font-family: inherit;
   font-size: 1.1rem;
   color: var(--txt);
+  outline: none;
 }
 
-.settings-section {
-  margin-bottom: 1.8rem;
+.save-btn {
+  padding: 12px;
+  background-color: var(--txt);
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1.2rem;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
-.settings-desc {
-  margin: 0 0 1rem;
+.save-btn:active {
+  opacity: 0.8;
+}
+
+.secondary-btn {
+  background-color: transparent;
+  border: 1px solid var(--txt);
+  color: var(--txt);
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.button-row .save-btn {
+  flex: 1;
+}
+
+#backup-section .button-row {
+  margin-bottom: 0;
+}
+
+#backup-section .save-btn {
   font-size: 1.1rem;
-  color: var(--txt-light);
 }
 
 .settings-cal-wrapper {
@@ -480,29 +520,47 @@ input {
   border-radius: 12px;
 }
 
-.settings-cal-wrapper .month-header {
-  margin-bottom: 1rem;
-}
-
-.settings-cal-wrapper .month-title {
-  font-size: 1.4rem;
-}
-
 .settings-cal-wrapper .weekday-row {
-  margin-bottom: 0.6rem;
-  font-size: 0.95rem;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
 }
 
 .settings-cal-wrapper .calender-grid {
-  row-gap: 12px;
+  row-gap: 15px;
 }
 
-.settings-cal-wrapper .cal-day {
-  height: 34px;
-  font-size: 1.1rem;
+.settings-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.settings-cal-wrapper .day-number {
+.settings-month-header h4 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.settings-cal-day {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.settings-logged,
+.settings-unlogged {
+  display: flex; 
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
+  border-radius: 50%;
+}
+
+.settings-logged {
+  background-color: var(--txt);
+  color: var(--bg);
 }

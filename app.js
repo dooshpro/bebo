@@ -56,8 +56,7 @@ function cleanDates(list) {
 }
 
 function clamp(value, { min, max }, fallback) {
-  const number = Math.round(parseFloat(value));
-  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+  return Math.min(max, Math.max(min, parseInt(value, 10) || fallback));
 }
 
 function readStorage(key) {
@@ -91,7 +90,7 @@ function monthFromOffset(offset) {
 }
 
 function monthTitle(first) {
-  return first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toLowerCase();
+  return first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 function groupPeriods() {
@@ -262,21 +261,13 @@ function handleQuickAction() {
     return;
   }
 
-  toggleDay(dateKey(new Date()));
-}
-
-function dayCell(date, { isMuted = false, canTap = false } = {}) {
-  const key = dateKey(date);
-
-  const classes = ['cal-day'];
-  if (isMuted) classes.push('muted');
-  if (canTap) classes.push('tappable');
-  if (key === dateKey(new Date())) classes.push('today');
-  if (appData.periodDays.includes(key)) classes.push('period');
-
-  const onclick = canTap ? ` onclick="toggleDay('${key}')"` : '';
-
-  return `<div class="${classes.join(' ')}"${onclick}><span class="day-number">${date.getDate()}</span></div>`;
+  const today = dateKey(new Date());
+  if (!appData.periodDays.includes(today)) {
+    appData.periodDays.push(today);
+    appData.periodDays.sort();
+    saveData();
+    renderDashboard();
+  }
 }
 
 function changeMonth(delta) {
@@ -295,8 +286,6 @@ function calenderDay(date) {
   const classes = ['cal-day'];
   let circle = '';
   let dot = '';
-
-  if (key === dateKey(new Date())) classes.push('today');
 
   if (info && info.phase === 'menstruation') {
     if (appData.periodDays.includes(key) || date <= startOfDay(new Date())) {
@@ -356,7 +345,10 @@ function changeSettingsMonth(delta) {
 function toggleDay(key) {
   const isMarked = appData.periodDays.includes(key);
 
-  if (key > dateKey(new Date()) && !isMarked) return;
+  if (key > dateKey(new Date()) && !isMarked) {
+    alert('you cannot log a period for a future date.');
+    return;
+  }
 
   if (isMarked) {
     appData.periodDays = appData.periodDays.filter(saved => saved !== key);
@@ -377,19 +369,14 @@ function renderSettingsCalender() {
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const leading = (first.getDay() + 6) % 7;
-  const todayKey = dateKey(new Date());
 
   let html = '<div></div>'.repeat(leading);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month, day);
-    const key = dateKey(date);
-    const isFuture = key > todayKey;
+    const key = dateKey(new Date(year, month, day));
+    const state = appData.periodDays.includes(key) ? 'settings-logged' : 'settings-unlogged';
 
-    // a marked future day stays tappable so it can be removed
-    const canTap = !isFuture || appData.periodDays.includes(key);
-
-    html += dayCell(date, { isMuted: isFuture, canTap });
+    html += `<div class="settings-cal-day" onclick="toggleDay('${key}')"><span class="${state}">${day}</span></div>`;
   }
 
   document.getElementById('settings-calender-grid').innerHTML = html;
@@ -399,16 +386,65 @@ function renderSettingsCalender() {
 }
 
 function fillSettingsForm() {
-  document.getElementById('period-length').value = appData.periodLength;
-  document.getElementById('cycle-length').value = appData.cycleLength;
+  document.getElementById('setting-period-length').value = appData.periodLength;
+  document.getElementById('setting-cycle-length').value = appData.cycleLength;
 }
 
 function saveSettings() {
-  appData.periodLength = clamp(document.getElementById('period-length').value, LIMITS.period, appData.periodLength);
-  appData.cycleLength = clamp(document.getElementById('cycle-length').value, LIMITS.cycle, appData.cycleLength);
+  appData.periodLength = clamp(document.getElementById('setting-period-length').value, LIMITS.period, 5);
+  appData.cycleLength = clamp(document.getElementById('setting-cycle-length').value, LIMITS.cycle, 28);
   saveData();
   fillSettingsForm();
   renderDashboard();
+}
+
+function exportData() {
+  const backup = {
+    pastPeriods: appData.periodDays,
+    cycleLength: appData.cycleLength,
+    periodLength: appData.periodLength
+  };
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `bebo_backup_${dateKey(new Date())}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const input = event.target;
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = loaded => {
+    let imported;
+    try {
+      imported = JSON.parse(loaded.target.result);
+    } catch (error) {
+      alert('could not read that file.');
+      return;
+    }
+
+    if (!imported || !Array.isArray(imported.pastPeriods)) {
+      alert('that does not look like a bebo backup.');
+      return;
+    }
+
+    appData.periodDays = cleanDates(imported.pastPeriods);
+    appData.cycleLength = clamp(imported.cycleLength, LIMITS.cycle, 28);
+    appData.periodLength = clamp(imported.periodLength, LIMITS.period, 5);
+
+    saveData();
+    fillSettingsForm();
+    renderSettingsCalender();
+    renderDashboard();
+    alert('backup restored.');
+  };
+  reader.readAsText(file);
+  input.value = ''; // so the same file can be picked again
 }
 
 renderDashboard();
