@@ -7,6 +7,7 @@ if ('serviceWorker' in navigator) {
 
 const STORAGE_KEY = 'bebo-data';
 const OLD_KEY = 'bebo-period-days';
+const NOTIF_KEY = 'bebo-last-notif';
 const MONTH_LIMIT = 12;
 const DAY_MS = 86400000;
 const LIMITS = { period: { min: 1, max: 10 }, cycle: { min: 20, max: 45 } };
@@ -74,12 +75,18 @@ function readStorage(key) {
   }
 }
 
+function cleanNotifs(saved) {
+  const notifs = saved && typeof saved === 'object' ? saved : {};
+  return { master: Boolean(notifs.master), period: notifs.period !== false, fertile: notifs.fertile !== false };
+}
+
 function loadData() {
   const saved = readStorage(STORAGE_KEY) || {};
   return {
     periodDays: cleanDates(saved.periodDays ?? readStorage(OLD_KEY)),
     periodLength: clamp(saved.periodLength, LIMITS.period, 5),
-    cycleLength: clamp(saved.cycleLength, LIMITS.cycle, 28)
+    cycleLength: clamp(saved.cycleLength, LIMITS.cycle, 28),
+    notifs: cleanNotifs(saved.notifs)
   };
 }
 
@@ -185,8 +192,9 @@ function cycleInfo(date) {
   const phase = phaseOf(cycleDay, cycleLen, periodLen, isLogged);
   const pastOvulation = cycleDay > ovulationDay(cycleLen);
   const message = phase === 'fertile window' && pastOvulation ? 'fertility is winding down.' : PHASES[phase].message;
+  const fertileStart = ovulationDay(cycleLen) - FERTILE_BEFORE;
 
-  return { cycleDay, phase, message };
+  return { cycleDay, cycleLen, fertileStart, phase, message };
 }
 
 let appData = loadData();
@@ -395,14 +403,85 @@ function renderSettingsCalender() {
 function fillSettingsForm() {
   document.getElementById('setting-period-length').value = appData.periodLength;
   document.getElementById('setting-cycle-length').value = appData.cycleLength;
+
+  const allowed = 'Notification' in window && Notification.permission === 'granted';
+  const master = appData.notifs.master && allowed;
+  document.getElementById('master-notif-toggle').checked = master;
+  document.getElementById('sub-notifs').classList.toggle('off', !master);
+  document.getElementById('notif-period').checked = appData.notifs.period;
+  document.getElementById('notif-fertile').checked = appData.notifs.fertile;
 }
 
 function saveSettings() {
   appData.periodLength = clamp(document.getElementById('setting-period-length').value, LIMITS.period, 5);
   appData.cycleLength = clamp(document.getElementById('setting-cycle-length').value, LIMITS.cycle, 28);
+  appData.notifs.period = document.getElementById('notif-period').checked;
+  appData.notifs.fertile = document.getElementById('notif-fertile').checked;
   saveData();
   fillSettingsForm();
   renderDashboard();
+}
+
+async function toggleNotifications() {
+  const toggle = document.getElementById('master-notif-toggle');
+
+  if (toggle.checked) {
+    if (!('Notification' in window)) {
+      alert('this browser does not support notifications.');
+      toggle.checked = false;
+    } else if ((await Notification.requestPermission()) !== 'granted') {
+      alert('notifications are blocked. turn them on in your browser settings.');
+      toggle.checked = false;
+    }
+  }
+
+  appData.notifs.master = toggle.checked;
+  document.getElementById('sub-notifs').classList.toggle('off', !toggle.checked);
+  saveSettings();
+  if (toggle.checked) checkReminders();
+}
+
+//reminder first time the app is opened each day, not at fixed time
+async function checkReminders() {
+  if (!appData.notifs.master) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!('serviceWorker' in navigator)) return;
+
+  const now = new Date();
+  const today = cycleInfo(now);
+  const tomorrow = cycleInfo(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+
+  const due = [];
+
+  if (appData.notifs.period) {
+    if (tomorrow && tomorrow.cycleDay === 1) {
+      due.push(['period', 'your period is expected tomorrow.']);
+    } else if (today && today.phase === 'late' && today.cycleDay === today.cycleLen + 1) {
+      due.push(['period', 'your period is expected today.']);
+    }
+  }
+
+  if (appData.notifs.fertile && today && today.phase === 'fertile window' && today.cycleDay === today.fertileStart) {
+    due.push(['fertile', 'your fertile window starts today.']);
+  }
+
+  const stored = readStorage(NOTIF_KEY);
+  const last = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+
+  const todayKey = dateKey(now);
+  const fresh = due.filter(([type]) => last[type] !== todayKey);
+  if (fresh.length === 0) return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    for (const [type, body] of fresh) {
+      await reg.showNotification('bebo.', { body, icon: 'favicon.png', tag: `bebo-${type}` });
+      last[type] = todayKey;
+    }
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(last));
+  } catch (error) {
+    console.error('could not show notification', error);
+  }
 }
 
 function exportData() {
@@ -460,3 +539,11 @@ catImage.onerror = () => {
 };
 
 renderDashboard();
+checkReminders();
+
+//coming back to the app: new day?
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  renderDashboard();
+  checkReminders();
+});

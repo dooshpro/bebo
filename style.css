@@ -564,3 +564,78 @@ footer {
   background-color: var(--txt);
   color: var(--bg);
 }
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.toggle-label {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--txt);
+}
+
+.toggle-sub {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--txt-light);
+}
+
+.sub-notifs {
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+  transition: opacity 0.3s;
+}
+
+.sub-notifs.off {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.settings-switch input:checked + .slider {
+  background-color: var(--txt);
+}
+
+.settings-switch input:checked + .slider::before {
+  transform: translateX(22px);
+}

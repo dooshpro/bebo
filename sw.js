@@ -50,6 +50,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(req)
         .then(res => {
+          // page opened with query string never stored
           if (res.ok && !url.search) {
             const copy = res.clone();
             caches.open(CACHE).then(cache => cache.put(req, copy));
@@ -75,5 +76,15 @@ self.addEventListener('fetch', event => {
         })
       )
     );
-  } 
+  }
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const open = list.find(client => 'focus' in client);
+      return open ? open.focus() : self.clients.openWindow('./');
+    })
+  );
 });

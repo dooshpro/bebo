@@ -112,11 +112,36 @@
                 <button class="nav-arrow" id="settings-next-month-btn" onclick="changeSettingsMonth(1)">
                   <img src="icon/next.png" alt="next">
                 </button>
-              </div> 
+              </div>
               <div class="weekday-row">
                 <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
               </div>
               <div id="settings-calender-grid" class="calender-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>notifications</h3>
+          <p class="settings-desc">get a reminder the first time you open bebo each day.</p>
+          <div class="toggle-row">
+            <span class="toggle-label">enable notifications</span>
+            <label class="switch settings-switch"><input type="checkbox" id="master-notif-toggle" onchange="toggleNotifications()"><span class="slider"></span></label>
+          </div>
+          <div id="sub-notifs" class="sub-notifs off">
+            <div class="toggle-row">
+              <div>
+                <span class="toggle-label">period reminder</span>
+                <span class="toggle-sub">the day before it's due</span>
+              </div>
+              <label class="switch settings-switch"><input type="checkbox" id="notif-period" onchange="saveSettings()"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <span class="toggle-label">fertile window</span>
+                <span class="toggle-sub">the day it starts</span>
+              </div>
+              <label class="switch settings-switch"><input type="checkbox" id="notif-fertile" onchange="saveSettings()"><span class="slider"></span></label>
             </div>
           </div>
         </div>
