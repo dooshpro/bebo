@@ -82,6 +82,7 @@ function cleanNotifs(saved) {
   return { master: Boolean(notifs.master), period: notifs.period !== false, fertile: notifs.fertile !== false };
 }
 
+// role is null
 function cleanSync(saved) {
   const none = { role: null, mailbox: null, key: null };
   if (!saved || typeof saved !== 'object') return none;
@@ -119,6 +120,46 @@ function isPartner() {
   return appData.sync.role === 'partner';
 }
 
+function toHex(bytes) {
+  return [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function fromHex(hex) {
+  return new Uint8Array(hex.match(/[\da-f]{2}/gi).map(pair => parseInt(pair, 16)));
+}
+
+async function makeKey() {
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  return toHex(await crypto.subtle.exportKey('raw', key));
+}
+
+function importKey(keyHex) {
+  return crypto.subtle.importKey('raw', fromHex(keyHex), 'AES-GCM', false, ['encrypt', 'decrypt']);
+}
+
+//12 byte iv + ciphertext
+async function encryptData(data, keyHex) {
+  const key = await importKey(keyHex);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plain = new TextEncoder().encode(JSON.stringify(data));
+  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain));
+
+  const packed = new Uint8Array(iv.length + cipher.length);
+  packed.set(iv);
+  packed.set(cipher, iv.length);
+  return toHex(packed);
+}
+
+async function decryptData(hex, keyHex) {
+  try {
+    const packed = fromHex(hex);
+    const key = await importKey(keyHex);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: packed.slice(0, 12) }, key, packed.slice(12));
+    return JSON.parse(new TextDecoder().decode(plain));
+  } catch (error) {
+    return null;
+  }
+}
 function monthFromOffset(offset) {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth() + offset, 1);
