@@ -82,7 +82,6 @@ function cleanNotifs(saved) {
   return { master: Boolean(notifs.master), period: notifs.period !== false, fertile: notifs.fertile !== false };
 }
 
-// role is null
 function cleanSync(saved) {
   const none = { role: null, mailbox: null, key: null };
   if (!saved || typeof saved !== 'object') return none;
