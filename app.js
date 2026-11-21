@@ -329,17 +329,20 @@ function navTo(name) {
 function setActionButton(info) {
   const dot = info ? `<span class="action-dot ${info.phase === 'menstruation' ? 'pink-bg' : 'blue-bg'}"></span> ` : '';
   const label = !info ? 'set up data' : info.phase === 'menstruation' ? 'you are on it.' : 'log period today';
-  document.getElementById('quick-action-btn').innerHTML = `${dot}${label}  <img src="icon/next.png" class="btn-arrow" alt="">`;
+  document.getElementById('quick-action-btn').innerHTML = `${dot}${label}  <img src="icon/next.png" class="btn-arrow" alt="">`;
 }
 
 function renderDashboard() {
   const info = cycleInfo(new Date());
   const look = info ? PHASES[info.phase] : WELCOME;
+  const empty = isPartner() ? 'waiting for her data to sync.' : 'tap the gear icon to log your dates.';
 
   document.documentElement.style.setProperty('--dynamic', look.color);
+  document.getElementById('partner-prefix').hidden = !isPartner();
+  document.getElementById('quick-action-btn').hidden = isPartner();
   document.getElementById('cycle-day-number').textContent = info ? info.cycleDay : '-';
   document.getElementById('cycle-phase').textContent = info ? info.phase : 'welcome';
-  document.getElementById('cycle-message').textContent = info ? info.message : 'tap the gear icon to log your dates.';
+  document.getElementById('cycle-message').textContent = info ? info.message : empty;
   document.getElementById('cat-image').src = look.image;
   setActionButton(info);
   renderWeekStrip();
@@ -372,6 +375,7 @@ function renderWeekStrip() {
 }
 
 function handleQuickAction() {
+  if (isPartner()) return;
   const info = cycleInfo(new Date());
 
   if (!info || info.phase === 'menstruation') {
@@ -462,6 +466,8 @@ function changeSettingsMonth(delta) {
 }
 
 function toggleDay(key) {
+  if (isPartner()) return;
+
   const isMarked = appData.periodDays.includes(key);
 
   if (key > dateKey(new Date()) && !isMarked) {
@@ -524,7 +530,17 @@ function partnerLink() {
 }
 
 function fillSyncSection() {
+  const partner = isPartner();
   const shared = isOwner();
+
+  document.getElementById('owner-settings-block').hidden = partner;
+  document.getElementById('backup-section').hidden = partner;
+  document.getElementById('owner-sync-controls').hidden = partner;
+  document.getElementById('disconnect-partner-btn').hidden = !partner;
+  document.getElementById('sync-desc').textContent = partner
+    ? 'you are in partner mode. this is a read-only view of her cycle.'
+    : 'share an encrypted link so your partner can see your cycle.';
+
   document.getElementById('generate-link-btn').textContent = shared ? 'generate new link' : 'generate link';
   document.getElementById('revoke-link-btn').hidden = !shared;
   document.getElementById('link-row').hidden = !shared;
@@ -581,9 +597,80 @@ async function copyPartnerLink() {
   setTimeout(() => { button.textContent = 'copy'; }, 1500);
 }
 
+function leavePartnerMode() {
+  try {
+    [STORAGE_KEY, OLD_KEY, NOTIF_KEY].forEach(name => localStorage.removeItem(name));
+  } catch (error) {
+    console.warn('could not clear data', error);
+  }
+  location.replace(location.pathname);
+}
+
+function disconnectPartner() {
+  if (!isPartner()) return;
+  if (!confirm('disconnect from partner? this device will reset to an empty state.')) return;
+  leavePartnerMode();
+}
+
+function joinFromLink() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('sync')) return;
+
+  const mailbox = params.get('sync');
+  const key = location.hash.slice(1);
+  history.replaceState(null, '', location.pathname);
+
+  if (!MAILBOX_RE.test(mailbox) || !KEY_RE.test(key)) {
+    alert('that partner link looks broken. ask for a new one.');
+    return;
+  }
+
+  const hasOwnData = !isPartner() && (appData.periodDays.length > 0 || isOwner());
+  if (hasOwnData && !confirm('this device will switch to partner mode and its own cycle data will be removed. export a backup first if you want to keep it. continue?')) return;
+
+  appData.periodDays = [];
+  appData.periodLength = 5;
+  appData.cycleLength = 28;
+  appData.sync = { role: 'partner', mailbox, key };
+  saveData();
+}
+
+let pulling = false;
+
+async function pullFromCloud() {
+  if (!isPartner() || pulling) return;
+  pulling = true;
+
+  try {
+    const response = await fetch(mailboxUrl(appData.sync.mailbox));
+    const text = (await response.text()).trim();
+
+    if (text === DESTROYED) {
+      alert('the link was revoked or replaced, so this device is being disconnected.');
+      leavePartnerMode();
+      return;
+    }
+
+    const data = text ? await decryptData(text, appData.sync.key) : null;
+    if (!data) return;
+
+    appData.periodDays = cleanDates(data.pastPeriods);
+    appData.cycleLength = clamp(data.cycleLength, LIMITS.cycle, 28);
+    appData.periodLength = clamp(data.periodLength, LIMITS.period, 5);
+    saveData();
+    renderDashboard();
+  } catch (error) {
+    console.warn('could not fetch her data', error);
+  } finally {
+    pulling = false;
+  }
+}
+
 function saveSettings() {
-  appData.periodLength = clamp(document.getElementById('setting-period-length').value, LIMITS.period, 5);
-  appData.cycleLength = clamp(document.getElementById('setting-cycle-length').value, LIMITS.cycle, 28);
+  if (!isPartner()) {
+    appData.periodLength = clamp(document.getElementById('setting-period-length').value, LIMITS.period, 5);
+    appData.cycleLength = clamp(document.getElementById('setting-cycle-length').value, LIMITS.cycle, 28);
+  }
   appData.notifs.period = document.getElementById('notif-period').checked;
   appData.notifs.fertile = document.getElementById('notif-fertile').checked;
   saveData();
@@ -622,17 +709,18 @@ async function checkReminders() {
   const tomorrow = cycleInfo(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
 
   const due = [];
+  const who = isPartner() ? 'her' : 'your';
 
   if (appData.notifs.period) {
     if (tomorrow && tomorrow.cycleDay === 1) {
-      due.push(['period', 'your period is expected tomorrow.']);
+      due.push(['period', `${who} period is expected tomorrow.`]);
     } else if (today && today.phase === 'late' && today.cycleDay === today.cycleLen + 1) {
-      due.push(['period', 'your period is expected today.']);
+      due.push(['period', `${who} period is expected today.`]);
     }
   }
 
   if (appData.notifs.fertile && today && today.phase === 'fertile window' && today.cycleDay === today.fertileStart) {
-    due.push(['fertile', 'your fertile window starts today.']);
+    due.push(['fertile', `${who} fertile window starts today.`]);
   }
 
   const stored = readStorage(NOTIF_KEY);
@@ -655,6 +743,8 @@ async function checkReminders() {
 }
 
 function exportData() {
+  if (isPartner()) return;
+
   const backup = {
     pastPeriods: appData.periodDays,
     cycleLength: appData.cycleLength,
@@ -672,7 +762,7 @@ function exportData() {
 function importData(event) {
   const input = event.target;
   const file = input.files[0];
-  if (!file) return;
+  if (!file || isPartner()) return;
 
   const reader = new FileReader();
   reader.onload = loaded => {
@@ -701,7 +791,7 @@ function importData(event) {
     alert('backup restored.');
   };
   reader.readAsText(file);
-  input.value = ''; // so the same file can be picked again
+  input.value = '';
 }
 
 const catImage = document.getElementById('cat-image');
@@ -709,9 +799,11 @@ catImage.onerror = () => {
   if (!catImage.src.endsWith(WELCOME.image)) catImage.src = WELCOME.image;
 };
 
+joinFromLink();
 renderDashboard();
 checkReminders();
-pushToCloud(); // catches up if an earlier push failed (offline)
+pushToCloud();
+pullFromCloud();
 
 //coming back to the app: new day?
 document.addEventListener('visibilitychange', () => {
@@ -719,4 +811,5 @@ document.addEventListener('visibilitychange', () => {
   renderDashboard();
   checkReminders();
   pushToCloud();
+  pullFromCloud();
 });

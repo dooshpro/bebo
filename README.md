@@ -20,6 +20,8 @@ a period tracker pwa like flo. built with html, css and vanilla js.
 
 - **daily reminders:** reminders for upcoming periods and fertile windows.
 
+- **partner feature:** can share e2ee link for partner view. 
+
 ## tech and assets
 
 - **stack:** html, css, and js

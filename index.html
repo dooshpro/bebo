@@ -31,7 +31,7 @@
         </div>
       </header>
       <main class="dashboard-main">
-        <p class="cycle-day">cycle day <span id="cycle-day-number">-</span><span class="dynamic-dot"></span></p>
+        <p class="cycle-day"><span id="partner-prefix" hidden>she is on</span>cycle day <span id="cycle-day-number">-</span><span class="dynamic-dot"></span></p>
         <h2 id="cycle-phase">welcome</h2>
         <p id="cycle-message">tap the gear icon to log your dates.</p>
         <div class="illustration">
@@ -149,14 +149,17 @@
         <div class="settings-section" id="partner-section">
           <h3>partner sync</h3>
           <p class="settings-desc" id="sync-desc">share an encrypted link so ur partner can see ur cycle.</p>
-          <div class="button-row">
-            <button id="generate-link-btn" class="save-btn" onclick="generatePartnerLink()">generate link</button>
-            <button id="revoke-link-btn" class="save-btn secondary-btn" onclick="revokePartnerLink()" hidden>revoke</button>
+          <div id="owner-sync-controls">
+            <div class="button-row">
+              <button id="generate-link-btn" class="save-btn" onclick="generatePartnerLink()">generate link</button>
+              <button id="revoke-link-btn" class="save-btn secondary-btn" onclick="revokePartnerLink()" hidden>revoke</button>
+            </div>
+            <div id="link-row" class="link-row" hidden>
+              <input type="text" id="sync-link-output" class="link-output" readonly aria-label="partner link" onfocus="this.select()">
+              <button id="copy-link-btn" class="save-btn secondary-btn" onclick="copyPartnerLink()">copy</button>
+            </div>
           </div>
-          <div id="link-row" class="link-row" hidden>
-            <input type="text" id="sync-link-output" class="link-output" readonly aria-label="partner link" onfocus="this.select()">
-            <button id="copy-link-btn" class="save-btn secondary-btn" onclick="copyPartnerLink()">copy</button>
-          </div>
+          <button id="disconnect-partner-btn" class="save-btn secondary-btn wide-btn" onclick="disconnectPartner()" hidden>disconnect partner mode</button>
         </div>
 
         <div class="settings-section" id="backup-section">

@@ -648,6 +648,14 @@ footer {
   flex: 2;
 }
 
+.wide-btn {
+  width: 100%;
+}
+
+#partner-section:has(+ #backup-section[hidden]) {
+  border-bottom: none;
+}
+
 .link-row {
   display: flex;
   gap: 10px;
