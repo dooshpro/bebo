@@ -12,6 +12,8 @@ const MONTH_LIMIT = 12;
 const DAY_MS = 86400000;
 const LIMITS = { period: { min: 1, max: 10 }, cycle: { min: 20, max: 45 } };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const MAILBOX_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const KEY_RE = /^[0-9a-f]{64}$/; // aes-256 key as hex
 
 // logs this close together count as one period
 const SAME_PERIOD_GAP = 5;
@@ -80,13 +82,25 @@ function cleanNotifs(saved) {
   return { master: Boolean(notifs.master), period: notifs.period !== false, fertile: notifs.fertile !== false };
 }
 
+// role is null
+function cleanSync(saved) {
+  const none = { role: null, mailbox: null, key: null };
+  if (!saved || typeof saved !== 'object') return none;
+
+  const { role, mailbox, key } = saved;
+  if (role !== 'owner' && role !== 'partner') return none;
+  if (!MAILBOX_RE.test(mailbox) || !KEY_RE.test(key)) return none;
+  return { role, mailbox, key };
+}
+
 function loadData() {
   const saved = readStorage(STORAGE_KEY) || {};
   return {
     periodDays: cleanDates(saved.periodDays ?? readStorage(OLD_KEY)),
     periodLength: clamp(saved.periodLength, LIMITS.period, 5),
     cycleLength: clamp(saved.cycleLength, LIMITS.cycle, 28),
-    notifs: cleanNotifs(saved.notifs)
+    notifs: cleanNotifs(saved.notifs),
+    sync: cleanSync(saved.sync)
   };
 }
 
@@ -96,6 +110,14 @@ function saveData() {
   } catch (error) {
     console.warn('could not save', error);
   }
+}
+
+function isOwner() {
+  return appData.sync.role === 'owner';
+}
+
+function isPartner() {
+  return appData.sync.role === 'partner';
 }
 
 function monthFromOffset(offset) {
@@ -226,7 +248,7 @@ function navTo(name) {
 function setActionButton(info) {
   const dot = info ? `<span class="action-dot ${info.phase === 'menstruation' ? 'pink-bg' : 'blue-bg'}"></span> ` : '';
   const label = !info ? 'set up data' : info.phase === 'menstruation' ? 'you are on it.' : 'log period today';
-  document.getElementById('quick-action-btn').innerHTML = `${dot}${label} &nbsp;<img src="icon/next.png" class="btn-arrow" alt="">`;
+  document.getElementById('quick-action-btn').innerHTML = `${dot}${label}  <img src="icon/next.png" class="btn-arrow" alt="">`;
 }
 
 function renderDashboard() {
