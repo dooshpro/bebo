@@ -68,7 +68,7 @@
         </div>
         <div id="calender-grid" class="calender-grid"></div>
         <div class="calender-key">
-          <p class="key-title">keys -&gt;</p>
+          <p class="key-title">keys -></p>
           <p><span class="key-dot pink-bg"></span> period</p>
           <p><span class="key-dot blue-bg"></span> fertile window</p>
           <p><span class="key-circle"></span> ovulation</p>
@@ -146,8 +146,21 @@
           </div>
         </div>
 
+        <div class="settings-section" id="partner-section">
+          <h3>partner sync</h3>
+          <p class="settings-desc" id="sync-desc">share an encrypted link so ur partner can see ur cycle.</p>
+          <div class="button-row">
+            <button id="generate-link-btn" class="save-btn" onclick="generatePartnerLink()">generate link</button>
+            <button id="revoke-link-btn" class="save-btn secondary-btn" onclick="revokePartnerLink()" hidden>revoke</button>
+          </div>
+          <div id="link-row" class="link-row" hidden>
+            <input type="text" id="sync-link-output" class="link-output" readonly aria-label="partner link" onfocus="this.select()">
+            <button id="copy-link-btn" class="save-btn secondary-btn" onclick="copyPartnerLink()">copy</button>
+          </div>
+        </div>
+
         <div class="settings-section" id="backup-section">
-          <h3>backup &amp; restore</h3>
+          <h3>backup & restore</h3>
           <p class="settings-desc">save your data to a file in case you clear your browser history. sync links aren't included.</p>
           <div class="button-row">
             <button class="save-btn" onclick="exportData()">export</button>

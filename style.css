@@ -639,3 +639,36 @@ footer {
 .settings-switch input:checked + .slider::before {
   transform: translateX(22px);
 }
+
+footer {
+  margin-bottom: 0;
+}
+
+#generate-link-btn {
+  flex: 2;
+}
+
+.link-row {
+  display: flex;
+  gap: 10px;
+}
+
+.link-output {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--txt);
+}
+
+.link-row .save-btn {
+  font-size: 1.1rem;
+}
+
+#backup-section .save-btn {
+  font-size: 1.1rem;
+}

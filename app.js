@@ -160,6 +160,47 @@ async function decryptData(hex, keyHex) {
     return null;
   }
 }
+
+const SYNC_SERVER = 'https://bebo-sync.shvpnd0.workers.dev';
+const DESTROYED = 'DESTROYED';
+
+function mailboxUrl(mailbox) {
+  return `${SYNC_SERVER}/${mailbox}`;
+}
+
+async function postToMailbox(mailbox, text) {
+  const response = await fetch(mailboxUrl(mailbox), {
+    method: 'POST',
+    body: text,
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  if (!response.ok) throw new Error(`sync server answered ${response.status}`);
+}
+
+function syncPayload() {
+  return { pastPeriods: appData.periodDays, cycleLength: appData.cycleLength, periodLength: appData.periodLength };
+}
+
+async function sendSnapshot() {
+  if (!isOwner()) return false;
+
+  try {
+    const text = await encryptData(syncPayload(), appData.sync.key);
+    await postToMailbox(appData.sync.mailbox, text);
+    return true;
+  } catch (error) {
+    console.warn('could not sync', error);
+    return false;
+  }
+}
+
+let pushQueue = Promise.resolve();
+
+function pushToCloud() {
+  pushQueue = pushQueue.then(sendSnapshot);
+  return pushQueue;
+}
+
 function monthFromOffset(offset) {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth() + offset, 1);
@@ -343,6 +384,7 @@ function handleQuickAction() {
     appData.periodDays.push(today);
     appData.periodDays.sort();
     saveData();
+    pushToCloud();
     renderDashboard();
   }
 }
@@ -435,6 +477,7 @@ function toggleDay(key) {
   }
 
   saveData();
+  pushToCloud();
   renderSettingsCalender();
   renderDashboard();
 }
@@ -472,6 +515,70 @@ function fillSettingsForm() {
   document.getElementById('sub-notifs').classList.toggle('off', !master);
   document.getElementById('notif-period').checked = appData.notifs.period;
   document.getElementById('notif-fertile').checked = appData.notifs.fertile;
+  fillSyncSection();
+}
+
+function partnerLink() {
+  const page = location.href.split(/[?#]/)[0];
+  return `${page}?sync=${appData.sync.mailbox}#${appData.sync.key}`;
+}
+
+function fillSyncSection() {
+  const shared = isOwner();
+  document.getElementById('generate-link-btn').textContent = shared ? 'generate new link' : 'generate link';
+  document.getElementById('revoke-link-btn').hidden = !shared;
+  document.getElementById('link-row').hidden = !shared;
+  document.getElementById('sync-link-output').value = shared ? partnerLink() : '';
+}
+
+async function generatePartnerLink() {
+  const button = document.getElementById('generate-link-btn');
+  const previous = appData.sync;
+  button.disabled = true;
+
+  try {
+    appData.sync = { role: 'owner', mailbox: crypto.randomUUID(), key: await makeKey() };
+    if (!(await pushToCloud())) throw new Error('first push failed');
+    saveData();
+
+    if (previous.role === 'owner') postToMailbox(previous.mailbox, DESTROYED).catch(() => {});
+  } catch (error) {
+    appData.sync = previous;
+    alert('could not create a link right now. check your connection and try again.');
+  }
+
+  button.disabled = false;
+  fillSyncSection();
+}
+
+async function revokePartnerLink() {
+  if (!isOwner()) return;
+  if (!confirm('revoke partner access? the current link will stop working.')) return;
+
+  try {
+    await postToMailbox(appData.sync.mailbox, DESTROYED);
+  } catch (error) {
+    alert('could not reach the sync server, so the link is still active. try again.');
+    return;
+  }
+
+  appData.sync = cleanSync(null);
+  saveData();
+  fillSyncSection();
+}
+
+async function copyPartnerLink() {
+  const output = document.getElementById('sync-link-output');
+  const button = document.getElementById('copy-link-btn');
+  output.select();
+
+  try {
+    await navigator.clipboard.writeText(output.value);
+    button.textContent = 'copied';
+  } catch (error) {
+    button.textContent = 'selected';
+  }
+  setTimeout(() => { button.textContent = 'copy'; }, 1500);
 }
 
 function saveSettings() {
@@ -480,6 +587,7 @@ function saveSettings() {
   appData.notifs.period = document.getElementById('notif-period').checked;
   appData.notifs.fertile = document.getElementById('notif-fertile').checked;
   saveData();
+  pushToCloud();
   fillSettingsForm();
   renderDashboard();
 }
@@ -586,6 +694,7 @@ function importData(event) {
     appData.periodLength = clamp(imported.periodLength, LIMITS.period, 5);
 
     saveData();
+    pushToCloud();
     fillSettingsForm();
     renderSettingsCalender();
     renderDashboard();
@@ -602,10 +711,12 @@ catImage.onerror = () => {
 
 renderDashboard();
 checkReminders();
+pushToCloud(); // catches up if an earlier push failed (offline)
 
 //coming back to the app: new day?
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   renderDashboard();
   checkReminders();
+  pushToCloud();
 });
